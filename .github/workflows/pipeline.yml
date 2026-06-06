@@ -1,0 +1,84 @@
+name: DevSecOps Pipeline
+
+on:
+push:
+branches:
+- main
+pull_request:
+branches:
+- main
+
+jobs:
+
+gitleaks:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Run Gitleaks
+    uses: gitleaks/gitleaks-action@v2
+```
+
+dependency-scan:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Dependency Scan
+    run: npm audit --audit-level=high || true
+```
+
+build:
+runs-on: ubuntu-latest
+
+```
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Setup Node
+    uses: actions/setup-node@v4
+    with:
+      node-version: 22
+
+  - name: Install Dependencies
+    run: npm install
+
+  - name: Syntax Check
+    run: node --check server.js
+```
+
+docker-build:
+runs-on: ubuntu-latest
+needs: build
+
+```
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Build Docker Image
+    run: docker build -t student-portal .
+```
+
+trivy:
+runs-on: ubuntu-latest
+needs: docker-build
+
+```
+steps:
+  - uses: actions/checkout@v4
+
+  - name: Build Docker Image
+    run: docker build -t student-portal .
+
+  - name: Scan Image with Trivy
+    uses: aquasecurity/trivy-action@master
+    with:
+      image-ref: student-portal
+      format: table
+      exit-code: 0
+```
+
